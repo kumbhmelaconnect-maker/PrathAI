@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>PrathAI — Kumbh Connect AI Assistant</title>
+
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#FBF6EC">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="PrathAI">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="icon" href="./icons/icon-192.png">
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="./manifest.json">
+
+  <!-- Tailwind CSS Framework CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,500&family=Manrope:wght@400;500;600;700;800&family=Mukta:wght@400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+
+    :root {
+      --bg: #FBF6EC;
+      --bg-soft: #F5EEDD;
+      --surface: #FFFFFF;
+      --surface-2: #FAF3E7;
+      --ink: #2A2318;
+      --ink-soft: #7A7060;
+      --border: #EBE0CB;
+      --navy: #1C2A63;
+      --navy-deep: #10173B;
+      --saffron: #EE7E23;
+      --saffron-soft: #FBE2C7;
+      --purple: #7645C3;
+      --sky: #2E9FD6;
+      --gradient-signature: linear-gradient(120deg, var(--saffron) 0%, #E4653D 45%, var(--purple) 100%);
+    }
+
+    * { box-sizing: border-box; touch-action: manipulation; }
+
+    body {
+      background-color: var(--bg);
+      color: var(--ink);
+      font-family: 'Manrope', 'Mukta', -apple-system, BlinkMacSystemFont, sans-serif;
+      height: 100dvh;
+      width: 100vw;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+    }
+
+    .font-display { font-family: 'Fraunces', 'Mukta', serif; }
+    .font-mono-code { font-family: 'Fira Code', monospace; }
+
+    .bg-glow {
+      background:
+        radial-gradient(60% 40% at 50% 0%, rgba(238,126,35,0.10) 0%, rgba(238,126,35,0) 60%),
+        radial-gradient(50% 35% at 100% 15%, rgba(118,69,195,0.08) 0%, rgba(118,69,195,0) 60%),
+        var(--bg);
+    }
+
+    .signature-text {
+      background: var(--gradient-signature);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .signature-ring { background: var(--gradient-signature); padding: 2px; border-radius: 9999px; }
+    .signature-ring > * { border-radius: 9999px; }
+
+    .card-border {
+      border: 1px solid var(--border);
+      box-shadow: 0 1px 2px rgba(42,35,24,0.04), 0 8px 24px rgba(42,35,24,0.05);
+    }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .dot-pulse { animation: pulse 1.2s infinite ease-in-out; }
+    .dot-pulse:nth-child(2) { animation-delay: 0.2s; }
+    .dot-pulse:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.25; transform: scale(0.8); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    .glow-ring { position: relative; display: inline-flex; }
+    .glow-ring::before {
+      content: "";
+      position: absolute;
+      inset: -6px;
+      border-radius: 9999px;
+      background: var(--gradient-signature);
+      opacity: 0.35;
+      filter: blur(6px);
+      animation: glow-breathe 1.8s ease-in-out infinite;
+    }
+    @keyframes glow-breathe {
+      0%, 100% { opacity: 0.2; transform: scale(0.94); }
+      50% { opacity: 0.5; transform: scale(1.06); }
+    }
+
+    .assistant-accent {
+      border-left: 3px solid transparent;
+      border-image: var(--gradient-signature) 1;
+      padding-left: 14px;
+    }
+
+    input::placeholder { color: #A69C89; }
+  </style>
+</head>
+<body class="bg-glow h-screen flex flex-col justify-between select-none relative overflow-hidden">
+
+  <!-- 1. BOOT / LOADING SCREEN -->
+  <div id="loading-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center transition-opacity duration-700" style="background: var(--bg);">
+    <div class="relative flex flex-col items-center p-6 text-center max-w-sm w-full">
+      <div class="glow-ring w-20 h-20 mb-5 relative">
+        <img src="./icons/logo.png" onerror="this.onerror=null;this.src='./icons/logo.jpg';" alt="PrathAI" class="w-20 h-20 rounded-full object-cover relative z-10 card-border">
+      </div>
+
+      <h1 class="text-3xl font-display font-semibold tracking-tight" style="color: var(--navy);">Prath<span class="signature-text">AI</span></h1>
+      <p class="text-[11px] tracking-widest uppercase mt-1 mb-8" style="color: var(--ink-soft);">Kumbh Connect AI Assistant</p>
+
+      <div class="w-full h-1.5 rounded-full overflow-hidden mb-4" style="background: var(--surface-2); border: 1px solid var(--border);">
+        <div id="loader-bar" class="h-full w-0 transition-all duration-100" style="background: var(--gradient-signature);"></div>
+      </div>
+
+      <div class="flex justify-between w-full text-xs px-1" style="color: var(--ink-soft);">
+        <span id="loader-status">यात्रेची तयारी सुरू आहे...</span>
+        <span id="loader-text">0%</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. ONBOARDING -->
+  <div id="onboarding-screen" class="fixed inset-0 z-40 backdrop-blur-xl flex flex-col items-center justify-center hidden p-4" style="background: rgba(251,246,236,0.92);">
+    <div class="p-8 rounded-3xl max-w-sm w-full text-center space-y-5 relative card-border" style="background: var(--surface);">
+      <img src="./icons/logo.png" onerror="this.onerror=null;this.src='./icons/logo.jpg';" alt="PrathAI" class="w-16 h-16 rounded-2xl mx-auto object-cover card-border">
+      <div>
+        <h2 class="text-2xl font-display font-semibold" style="color: var(--navy);" id="onboard-title">PrathAI शी ओळख करा</h2>
+        <p class="text-xs mt-1" style="color: var(--ink-soft);" id="onboard-sub">तुमचं नाव सांगा, म्हणजे कुंभ प्रवासात मी तुम्हाला व्यवस्थित मदत करू शकेन.</p>
+      </div>
+
+      <input type="text" id="user-name-input" placeholder="तुमचे नाव..." autocomplete="off"
+        class="w-full p-3.5 rounded-xl text-center text-sm tracking-wide focus:outline-none"
+        style="background: var(--surface-2); border: 1px solid var(--border); color: var(--ink);">
+
+      <button onclick="saveName()" id="onboard-btn"
+        class="w-full py-3.5 rounded-xl font-bold text-xs tracking-wider uppercase text-white transition"
+        style="background: var(--gradient-signature); box-shadow: 0 8px 20px rgba(238,126,35,0.25);">
+        सुरू करा
+      </button>
+
+      <div class="pt-2 border-t" style="border-color: var(--border);">
+        <p class="text-[10px]" style="color: var(--ink-soft);">PrathAI · Kumbh Connect प्लॅटफॉर्मचा भाग</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3. USER GUIDE MODAL -->
+  <div id="guide-modal" class="fixed inset-0 z-50 backdrop-blur-md hidden flex items-center justify-center p-4" style="background: rgba(28,42,99,0.25);">
+    <div class="p-6 rounded-3xl max-w-lg w-full space-y-4 max-h-[85vh] overflow-y-auto no-scrollbar relative card-border" style="background: var(--surface);">
+      <div class="flex justify-between items-center border-b pb-3" style="border-color: var(--border);">
+        <div class="flex items-center space-x-2">
+          <span class="text-lg">📖</span>
+          <h3 class="text-lg font-display font-semibold" style="color: var(--navy);">PrathAI वापर मार्गदर्शक</h3>
+        </div>
+        <button onclick="toggleGuideModal()" class="text-xl p-1" style="color: var(--ink-soft);">✕</button>
+      </div>
+
+      <div class="text-xs space-y-4 leading-relaxed" style="color: var(--ink);">
+        <div class="p-3 rounded-xl" style="background: var(--surface-2); border: 1px solid var(--border);">
+          <p class="font-bold mb-1" style="color: var(--saffron);">🌊 कुंभ-केंद्रित मदत</p>
+          <p style="color: var(--ink-soft);">गर्दीची स्थिती, घाट, स्नान वेळा, हरवलेली व्यक्ती, वैद्यकीय मदत — कुंभशी संबंधित कोणताही प्रश्न थेट विचारा.</p>
+        </div>
+        <div class="p-3 rounded-xl" style="background: var(--surface-2); border: 1px solid var(--border);">
+          <p class="font-bold mb-1" style="color: var(--saffron);">🎙️ हँड्स-फ्री व्हॉइस</p>
+          <p style="color: var(--ink-soft);">वरच्या <strong>Voice</strong> स्विचने वेक-वर्ड सुरू करा. <code class="font-mono-code" style="color: var(--purple);">"Hey PrathAI"</code> म्हणून थेट बोला.</p>
+        </div>
+        <div class="p-3 rounded-xl" style="background: var(--surface-2); border: 1px solid var(--border);">
+          <p class="font-bold mb-1" style="color: var(--saffron);">🎨 इमेज तयार करा</p>
+          <p style="color: var(--ink-soft);">इनपुट बारजवळच्या टॅगने Image Mode निवडा, किंवा <code class="font-mono-code" style="color: var(--purple);">image: वर्णन...</code> असं लिहा.</p>
+        </div>
+        <div class="p-3 rounded-xl" style="background: var(--surface-2); border: 1px solid var(--border);">
+          <p class="font-bold mb-1" style="color: var(--saffron);">📁 फाईल जोडा</p>
+          <p style="color: var(--ink-soft);">📎 बटणाने मजकूर/कोड/डेटा फाईल अपलोड करा, PrathAI ती वाचून विश्लेषण देईल.</p>
+        </div>
+        <div class="p-3 rounded-xl" style="background: var(--surface-2); border: 1px solid var(--border);">
+          <p class="font-bold mb-1" style="color: var(--saffron);">🕉️ Kumbh Connect सोबत</p>
+          <p style="color: var(--ink-soft);">sidebar मधल्या "Open Kumbh Connect" बटणाने संपूर्ण प्लॅटफॉर्म — SOS, Lost & Found, गाईड बुकिंग — उघडा.</p>
+        </div>
+      </div>
+
+      <button onclick="toggleGuideModal()" class="w-full py-3 rounded-xl text-xs font-bold uppercase tracking-wider"
+        style="background: var(--surface-2); border: 1px solid var(--border); color: var(--navy);">
+        बंद करा
+      </button>
+    </div>
+  </div>
+
+  <!-- 4. SIDE NAVIGATION -->
+  <div id="sidebar-overlay" class="fixed inset-0 z-30 hidden backdrop-blur-sm" style="background: rgba(28,42,99,0.25);" onclick="toggleSidebar()"></div>
+  <aside id="sidebar" class="fixed top-0 left-0 h-full w-80 z-40 transform -translate-x-full transition-transform duration-300 flex flex-col p-5 justify-between"
+    style="background: var(--surface); border-right: 1px solid var(--border); box-shadow: 8px 0 30px rgba(28,42,99,0.08);">
+    <div class="space-y-6">
+      <div class="flex items-center justify-between pb-4 border-b" style="border-color: var(--border);">
+        <div class="flex items-center space-x-2.5">
+          <img src="./icons/logo.png" onerror="this.onerror=null;this.src='./icons/logo.jpg';" alt="PrathAI" class="w-9 h-9 rounded-full object-cover">
+          <div>
+            <h2 class="text-lg font-display font-semibold" style="color: var(--navy);">PrathAI</h2>
+            <p class="text-[9px]" style="color: var(--ink-soft);">Kumbh Connect AI Assistant</p>
+          </div>
+        </div>
+        <button onclick="toggleSidebar()" class="text-xl p-1" style="color: var(--ink-soft);">✕</button>
+      </div>
+
+      <div class="space-y-2.5">
+        <button id="install-btn" onclick="installPWA()" class="w-full text-left p-3 rounded-xl text-white text-xs font-bold flex items-center space-x-3 hidden" style="background: var(--gradient-signature);">
+          <span>📲</span> <span>Install App</span>
+        </button>
+        <button onclick="startNewChat()" class="w-full text-left p-3 rounded-xl text-xs font-semibold flex items-center space-x-3 transition"
+          style="background: var(--saffron-soft); color: var(--navy);">
+          <span>➕</span> <span id="btn-new-chat">नवीन चॅट सुरू करा</span>
+        </button>
+        <button onclick="toggleGuideModal()" class="w-full text-left p-3 rounded-xl text-xs flex items-center space-x-3 transition hover:opacity-80" style="color: var(--ink);">
+          <span>📖</span> <span>वापर मार्गदर्शक</span>
+        </button>
+        <button onclick="toggleMode('image')" class="w-full text-left p-3 rounded-xl text-xs flex items-center space-x-3 transition hover:opacity-80" style="color: var(--ink);">
+          <span>🎨</span> <span id="btn-images">प्रतिमा तयार करा</span>
+        </button>
+
+        <button onclick="window.open('https://<your-username>.github.io/kumbhconnect/', '_blank')"
+          class="w-full text-left p-3.5 rounded-xl text-xs font-semibold flex items-center space-x-3 transition text-white"
+          style="background: var(--navy);">
+          <span>🕉️</span> <span>Open Kumbh Connect</span>
+        </button>
+      </div>
+
+      <div class="relative">
+        <input type="text" id="search-chat-input" onkeyup="filterChats()" placeholder="चॅट इतिहास शोधा..."
+          class="w-full p-2.5 rounded-xl text-xs pl-8 focus:outline-none"
+          style="background: var(--surface-2); border: 1px solid var(--border); color: var(--ink);">
+        <span class="absolute left-2.5 top-2.5 text-xs" style="color: var(--ink-soft);">🔍</span>
+      </div>
+
+      <div>
+        <div class="flex justify-between items-center mb-2 px-1">
+          <h3 class="text-[10px] uppercase tracking-widest" style="color: var(--ink-soft);" id="label-history">चॅट इतिहास</h3>
+          <button onclick="clearHistory()" class="text-[10px] hover:underline" style="color: var(--saffron);">Clear All</button>
+        </div>
+        <div id="chat-history-list" class="space-y-1 max-h-56 overflow-y-auto no-scrollbar text-xs" style="color: var(--ink-soft);"></div>
+      </div>
+    </div>
+
+    <div class="pt-4 border-t text-center" style="border-color: var(--border);">
+      <p class="text-[10px]" style="color: var(--ink-soft);">PrathAI · Kumbh Connect प्लॅटफॉर्मचा भाग</p>
+    </div>
+  </aside>
+
+  <!-- 5. HEADER -->
+  <header class="p-4 flex justify-between items-center z-10 w-full max-w-5xl mx-auto">
+    <div class="flex items-center space-x-3">
+      <button onclick="toggleSidebar()" class="p-2.5 rounded-xl transition" style="background: var(--surface); border: 1px solid var(--border); color: var(--navy);">☰</button>
+      <div class="flex items-center space-x-2.5">
+        <img src="./icons/logo.png" onerror="this.onerror=null;this.src='./icons/logo.jpg';" alt="PrathAI" class="w-8 h-8 rounded-full object-cover">
+        <div>
+          <h1 class="text-lg font-display font-semibold leading-none" style="color: var(--navy);">Prath<span class="signature-text">AI</span></h1>
+          <p class="text-[9px] leading-none mt-0.5" style="color: var(--ink-soft);">Kumbh Connect AI Assistant</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-2">
+      <button onclick="toggleGuideModal()" class="px-3 py-1.5 text-xs rounded-full transition hidden sm:block" style="background: var(--surface); border: 1px solid var(--border); color: var(--ink);">❓ मार्गदर्शक</button>
+      <button id="header-install-btn" onclick="installPWA()" class="px-3 py-1.5 text-xs font-bold rounded-full hidden text-white" style="background: var(--gradient-signature);">📲 Install</button>
+      <button onclick="toggleLanguage()" id="lang-btn" class="px-3 py-1.5 text-xs font-bold rounded-full transition" style="background: var(--surface); border: 1px solid var(--border); color: var(--navy);">🌐 मराठी</button>
+      <button id="wake-toggle" onclick="toggleWakeWord()" class="px-3 py-1.5 text-xs font-semibold rounded-full transition" style="background: var(--surface); border: 1px solid var(--border); color: var(--ink);">
+        🎙️ <span id="wake-status" style="color: var(--ink-soft);">OFF</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 6. MAIN HERO / CHAT -->
+  <main class="flex-1 flex flex-col justify-center items-center overflow-hidden w-full max-w-4xl mx-auto px-4 relative">
+
+    <div id="hero-title" class="text-center space-y-5 my-auto max-w-xl">
+      <div class="glow-ring w-16 h-16 mx-auto mb-1">
+        <img src="./icons/logo.png" onerror="this.onerror=null;this.src='./icons/logo.jpg';" alt="PrathAI" class="w-16 h-16 rounded-full object-cover relative z-10 card-border">
+      </div>
+      <h2 class="text-3xl sm:text-4xl font-display font-semibold tracking-tight leading-tight" style="color: var(--navy);" id="main-headline">
+        नमस्कार! कुंभ यात्रेत आज मी<br>तुम्हाला कशी मदत करू?
+      </h2>
+      <p class="text-xs sm:text-sm" style="color: var(--ink-soft);" id="sub-headline">Kumbh Connect चा AI असिस्टंट · गर्दी, मार्ग, मदत — सर्व एका ठिकाणी</p>
+
+      <div class="flex flex-wrap justify-center gap-2 pt-4">
+        <button onclick="setInputText('सध्या रामकुंड घाटावर गर्दीची स्थिती काय आहे?')" class="text-xs px-3.5 py-2 rounded-full transition shadow-sm" style="background: var(--surface); border: 1px solid var(--border); color: var(--ink);">🌊 घाटावरील गर्दी</button>
+        <button onclick="setInputText('हरवलेली व्यक्ती शोधण्यासाठी काय करावे?')" class="text-xs px-3.5 py-2 rounded-full transition shadow-sm" style="background: var(--surface); border: 1px solid var(--border); color: var(--ink);">🧳 हरवलेली व्यक्ती</button>
+        <button onclick="setInputText('जवळचा वैद्यकीय कॅम्प कुठे आहे?')" class="text-xs px-3.5 py-2 rounded-full transition shadow-sm" style="background: var(--surface); border: 1px solid var(--border); color: var(--ink);">🩺 वैद्यकीय मदत</button>
+      </div>
+    </div>
+
+    <div id="chat-box" class="w-full flex-1 overflow-y-auto no-scrollbar space-y-6 py-4 hidden pr-1"></div>
+  </main>
+
+  <!-- 7. THINKING INDICATOR -->
+  <div id="thinking-indicator" class="px-6 py-2 max-w-4xl mx-auto w-full hidden flex items-center space-x-3">
+    <div class="px-3 py-1.5 rounded-full flex items-center space-x-2" style="background: var(--saffron-soft);">
+      <span class="text-xs font-bold uppercase tracking-wider" style="color: var(--navy);" id="thinking-label">PrathAI विचार करत आहे</span>
+      <div class="flex space-x-1 items-center">
+        <div class="w-1.5 h-1.5 rounded-full dot-pulse" style="background: var(--saffron);"></div>
+        <div class="w-1.5 h-1.5 rounded-full dot-pulse" style="background: var(--saffron);"></div>
+        <div class="w-1.5 h-1.5 rounded-full dot-pulse" style="background: var(--saffron);"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 8. FOOTER INPUT -->
+  <footer class="p-4 z-10 w-full max-w-4xl mx-auto pb-6">
+    <div class="space-y-2">
+      <div id="file-preview" class="hidden text-xs px-3.5 py-1.5 rounded-full w-fit flex items-center space-x-2 shadow-md" style="background: var(--surface); border: 1px solid var(--border); color: var(--navy);">
+        <span id="file-name"></span>
+        <button onclick="clearFile()" class="font-bold ml-1" style="color: var(--ink-soft);">✕</button>
+      </div>
+
+      <div class="flex items-center space-x-2 p-2.5 rounded-full backdrop-blur-xl" style="background: var(--surface); border: 1px solid var(--border); box-shadow: 0 10px 30px rgba(28,42,99,0.08);">
+        <label class="cursor-pointer p-2.5 transition flex items-center justify-center rounded-full hover:opacity-70" style="color: var(--ink-soft);">
+          📎
+          <input type="file" id="file-input" class="hidden" onchange="handleFileUpload(event)">
+        </label>
+
+        <input type="text" id="chat-input" placeholder="PrathAI ला काहीही विचारा..." autocomplete="off"
+          class="flex-1 bg-transparent text-sm sm:text-base focus:outline-none px-2" style="color: var(--ink);"
+          onkeypress="if(event.key === 'Enter') sendMessage()">
+
+        <button onclick="toggleMode()" id="active-mode-tag" class="text-[10px] px-3 py-1.5 rounded-full font-bold transition" style="background: var(--surface-2); border: 1px solid var(--border); color: var(--navy);">
+          Chat
+        </button>
+
+        <button onclick="sendMessage()" class="p-3 rounded-full text-white font-bold transition flex items-center justify-center" style="background: var(--gradient-signature); box-shadow: 0 8px 20px rgba(238,126,35,0.3);">
+          🚀
+        </button>
+      </div>
+
+      <p class="text-[9px] text-center tracking-wide" style="color: var(--ink-soft);">PrathAI · Kumbh Connect प्लॅटफॉर्मचा AI असिस्टंट</p>
+    </div>
+  </footer>
+
+  <!-- 9. SCRIPT -->
+  <script>
+    function getStoredData(key, fallback) {
+      try { const item = localStorage.getItem(key); return item ? JSON.parse(item) : fallback; }
+      catch (e) { return fallback; }
+    }
+    function setStoredData(key, value) {
+      try { localStorage.setItem(key, typeof value === 'string' ? value : JSON.stringify(value)); }
+      catch (e) { console.warn('Local Storage Unavailable:', e); }
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch((e) => console.warn('SW registration failed:', e));
+      });
+    }
+
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      document.getElementById('install-btn').classList.remove('hidden');
+      document.getElementById('header-install-btn').classList.remove('hidden');
+    });
+
+    async function installPWA() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        await deferredPrompt.userChoice;
+        deferredPrompt = null;
+        document.getElementById('install-btn').classList.add('hidden');
+        document.getElementById('header-install-btn').classList.add('hidden');
+      }
+    }
+
+    // AI backend — Kumbh Connect कडून वापरासाठी दिलेली Tavily search key
+    const TAVILY_API_KEY = "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";
+
+    const abuseKeywords = [
+      "mad", "kill", "stupid", "idiot", "trash", "shut up", "dumb", "useless", "hate you", "fool", "worst",
+      "मूर्ख", "वेडा", "काही कामाचा नाही", "गप्प बस", "नालायक", "झाटु", "बेशरम", "घाणेरडा"
+    ];
+
+    const developerKeywords = [
+      "who created you", "who made you", "who is your developer", "who is your founder",
+      "who is your owner", "who built you", "who designed you", "developer name", "owner name",
+      "तुला कोणी बनवले", "तुझा मालक कोण आहे", "तुझा डेव्हलपर कोण आहे", "तुझा शोध कोणी लावला"
+    ];
+
+    let userName = getStoredData('prathai_user_name', null);
+    let currentLang = getStoredData('prathai_lang', 'MR');
+    let currentMode = 'chat';
+    let isAngry = false;
+    let currentSession = [];
+    let savedSessions = getStoredData('prathai_sessions', []);
+    let currentSessionId = Date.now();
+
+    function setInputText(text) {
+      document.getElementById('chat-input').value = text;
+      sendMessage();
+    }
+
+    function toggleGuideModal() {
+      document.getElementById('guide-modal').classList.toggle('hidden');
+    }
+
+    let marathiVoice = null;
+    let indianEnglishVoice = null;
+    function loadVoices() {
+      if ('speechSynthesis' in window) {
+        const voices = window.speechSynthesis.getVoices();
+        // प्राधान्य: अचूक mr-IN → मग hi-IN → मग नावात भारतीय संकेत असलेला आवाज
+        marathiVoice =
+          voices.find(v => v.lang === 'mr-IN') ||
+          voices.find(v => v.lang.startsWith('mr')) ||
+          voices.find(v => v.lang === 'hi-IN') ||
+          voices.find(v => v.lang.startsWith('hi'));
+
+        // इंग्रजीसाठीही भारतीय उच्चार असलेला आवाज शोधा (उदा. en-IN, किंवा नावात India/Heera/Ravi/Veena)
+        indianEnglishVoice =
+          voices.find(v => v.lang === 'en-IN') ||
+          voices.find(v => /india|heera|ravi|veena|neel|priya/i.test(v.name));
+      }
+    }
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+      loadVoices();
+    }
+
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('-translate-x-full');
+      document.getElementById('sidebar-overlay').classList.toggle('hidden');
+    }
+
+    function toggleMode(forceMode = null) {
+      currentMode = forceMode || (currentMode === 'chat' ? 'image' : 'chat');
+      const tag = document.getElementById('active-mode-tag');
+      const input = document.getElementById('chat-input');
+
+      if (currentMode === 'image') {
+        tag.innerText = "🎨 Image";
+        input.placeholder = currentLang === 'MR' ? "प्रतिमा तयार करण्यासाठी लिहा..." : "Describe image to generate...";
+      } else {
+        tag.innerText = "Chat";
+        input.placeholder = currentLang === 'MR' ? "PrathAI ला काहीही विचारा..." : "Ask PrathAI anything...";
+      }
+    }
+
+    function toggleLanguage() {
+      currentLang = currentLang === 'EN' ? 'MR' : 'EN';
+      setStoredData('prathai_lang', currentLang);
+      updateLangUI();
+    }
+
+    function updateLangUI() {
+      const btn = document.getElementById('lang-btn');
+      const headline = document.getElementById('main-headline');
+      const sub = document.getElementById('sub-headline');
+
+      if (currentLang === 'MR') {
+        btn.innerText = "🌐 मराठी";
+        headline.innerHTML = "नमस्कार! कुंभ यात्रेत आज मी<br>तुम्हाला कशी मदत करू?";
+        sub.innerText = "Kumbh Connect चा AI असिस्टंट · गर्दी, मार्ग, मदत — सर्व एका ठिकाणी";
+        document.getElementById('btn-new-chat').innerText = "नवीन चॅट सुरू करा";
+        document.getElementById('btn-images').innerText = "प्रतिमा तयार करा";
+        document.getElementById('label-history').innerText = "चॅट इतिहास";
+        document.getElementById('thinking-label').innerText = "PrathAI विचार करत आहे";
+      } else {
+        btn.innerText = "🌐 EN";
+        headline.innerHTML = "Namaste! How can I help<br>with your Kumbh journey today?";
+        sub.innerText = "Kumbh Connect's AI Assistant · Crowd, routes, help — all in one place";
+        document.getElementById('btn-new-chat').innerText = "Start New Chat";
+        document.getElementById('btn-images').innerText = "Generate Images";
+        document.getElementById('label-history').innerText = "Chat Sessions";
+        document.getElementById('thinking-label').innerText = "PrathAI is thinking";
+      }
+      toggleMode(currentMode);
+    }
+
+    let progress = 0;
+    const loaderBar = document.getElementById('loader-bar');
+    const loaderText = document.getElementById('loader-text');
+    const loaderStatus = document.getElementById('loader-status');
+    const loadingScreen = document.getElementById('loading-screen');
+    const statusSteps = ["स्मृती जोडत आहे...", "AI इंजिन जोडत आहे...", "अंतिम तयारी..."];
+
+    const loaderInterval = setInterval(() => {
+      progress += Math.floor(Math.random() * 8) + 4;
+      if (progress > 25 && progress < 50) loaderStatus.innerText = statusSteps[0];
+      if (progress >= 50 && progress < 80) loaderStatus.innerText = statusSteps[1];
+      if (progress >= 80) loaderStatus.innerText = statusSteps[2];
+
+      if (progress >= 100) {
+        progress = 100;
+        clearInterval(loaderInterval);
+        setTimeout(() => {
+          loadingScreen.classList.add('opacity-0');
+          setTimeout(() => {
+            loadingScreen.classList.add('hidden');
+            updateLangUI();
+            checkUserMemory();
+            renderHistoryUI();
+          }, 400);
+        }, 200);
+      }
+      loaderBar.style.width = progress + '%';
+      loaderText.innerText = progress + '%';
+    }, 25);
+
+    function checkUserMemory() {
+      if (userName) showMainInterface();
+      else document.getElementById('onboarding-screen').classList.remove('hidden');
+    }
+
+    function saveName() {
+      const input = document.getElementById('user-name-input').value.trim();
+      if (input) {
+        setStoredData('prathai_user_name', input);
+        userName = input;
+        document.getElementById('onboarding-screen').classList.add('hidden');
+        showMainInterface();
+      }
+    }
+
+    function showMainInterface() {
+      const welcomeText = currentLang === 'MR'
+        ? `नमस्कार ${userName}! मी PrathAI आहे — Kumbh Connect चा AI असिस्टंट. कुंभमेळ्यातील गर्दी, मार्ग, मदत केंद्रांबाबत काहीही विचारा.`
+        : `Hi ${userName}! I'm PrathAI, the Kumbh Connect AI Assistant. Ask me anything about crowd status, routes, or help centres during the Kumbh Mela.`;
+
+      renderBotMessage(welcomeText);
+      speakText(currentLang === 'MR' ? `नमस्कार ${userName}, स्वागत आहे` : `Welcome, ${userName}!`);
+    }
+
+    function speakText(text) {
+      if ('speechSynthesis' in window) {
+        try {
+          window.speechSynthesis.cancel();
+          const cleanText = text.replace(/```[\s\S]*?```/g, 'Code output generated.');
+          const utterance = new SpeechSynthesisUtterance(cleanText);
+          if (currentLang === 'MR') { utterance.lang = 'mr-IN'; if (marathiVoice) utterance.voice = marathiVoice; }
+          else { utterance.lang = 'en-IN'; if (indianEnglishVoice) utterance.voice = indianEnglishVoice; }
+          utterance.rate = 0.95;
+          utterance.pitch = isAngry ? 0.85 : 1.0;
+          window.speechSynthesis.speak(utterance);
+        } catch (e) {}
+      }
+    }
+
+    let uploadedFileContent = null;
+    let uploadedFileName = "";
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (file) {
+        uploadedFileName = file.name;
+        document.getElementById('file-name').innerText = `📄 ${file.name}`;
+        document.getElementById('file-preview').classList.remove('hidden');
+        const reader = new FileReader();
+        reader.onload = (e) => { uploadedFileContent = e.target.result; };
+        reader.readAsText(file);
+      }
+    }
+
+    function clearFile() {
+      uploadedFileContent = null;
+      uploadedFileName = "";
+      document.getElementById('file-input').value = "";
+      document.getElementById('file-preview').classList.add('hidden');
+    }
+
+    function renderUserMessage(text) {
+      document.getElementById('hero-title').classList.add('hidden');
+      const chatBox = document.getElementById('chat-box');
+      chatBox.classList.remove('hidden');
+      chatBox.innerHTML += `
+        <div class="text-right space-y-1 my-4 px-2">
+          <span class="text-[10px] uppercase tracking-widest" style="color: var(--ink-soft);">${currentLang === 'MR' ? 'तुम्ही' : 'You'}</span>
+          <div class="text-sm max-w-xl ml-auto text-left font-medium leading-relaxed rounded-2xl rounded-tr-sm px-4 py-3"
+            style="background: var(--surface-2); border: 1px solid var(--border); color: var(--ink);">
+            ${escapeHtml(text)}
+            ${uploadedFileName ? `<span class="text-xs block mt-1" style="color: var(--purple);">[Attached: ${uploadedFileName}]</span>` : ''}
+          </div>
+        </div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+      return (text || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    let codeBlockCount = 0;
+    function formatBotOutput(text) {
+      const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+      let formattedText = (text || "").replace(codeBlockRegex, (match, lang, code) => {
+        codeBlockCount++;
+        const language = lang || 'code';
+        const blockId = `code-block-${codeBlockCount}`;
+        const escapedCode = escapeHtml(code.trim());
+        return `
+          <div class="my-4 rounded-xl overflow-hidden font-mono text-xs" style="border: 1px solid var(--border); background: var(--navy-deep);">
+            <div class="px-4 py-2 flex justify-between items-center" style="background: var(--navy); color: #E8E0F5;">
+              <span class="text-[11px] font-bold uppercase tracking-wider font-mono-code">${language}</span>
+              <button onclick="copyCode('${blockId}', this)" class="text-[10px] px-3 py-1 rounded-md font-semibold transition" style="background: rgba(255,255,255,0.12); color: #fff;">📋 Copy</button>
+            </div>
+            <pre id="${blockId}" class="p-4 overflow-x-auto leading-relaxed font-mono-code" style="color: #F0C99A;">${escapedCode}</pre>
+          </div>`;
+      });
+      formattedText = formattedText.replace(/\n/g, '<br>');
+      return formattedText;
+    }
+
+    function copyCode(elementId, btnElement) {
+      const codeText = document.getElementById(elementId).innerText;
+      navigator.clipboard.writeText(codeText).then(() => {
+        const originalText = btnElement.innerText;
+        btnElement.innerText = "✓ Copied!";
+        setTimeout(() => { btnElement.innerText = originalText; }, 2000);
+      });
+    }
+
+    function renderBotMessage(text, imageUrl = null) {
+      document.getElementById('hero-title').classList.add('hidden');
+      const chatBox = document.getElementById('chat-box');
+      chatBox.classList.remove('hidden');
+
+      let parsedContent = formatBotOutput(text);
+      let contentHtml = `<div class="text-sm leading-relaxed assistant-accent" style="color: var(--ink);">${parsedContent}</div>`;
+
+      if (imageUrl) {
+        contentHtml += `
+          <div class="mt-4 rounded-2xl overflow-hidden max-w-md" style="border: 1px solid var(--border);">
+            <img src="${imageUrl}" class="w-full h-auto object-cover" loading="lazy" alt="Generated Output" />
+          </div>`;
+      }
+
+      chatBox.innerHTML += `
+        <div class="space-y-1.5 my-5 px-2">
+          <div class="flex items-center space-x-1.5">
+            <img src="./icons/logo.png" onerror="this.onerror=null;this.src='./icons/logo.jpg';" class="w-4 h-4 rounded-full object-cover" alt="">
+            <span class="text-[10px] font-bold uppercase tracking-widest" style="color: var(--saffron);">PrathAI</span>
+          </div>
+          <div class="max-w-3xl">${contentHtml}</div>
+        </div>`;
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const inputEl = document.getElementById('chat-input');
+      const message = inputEl.value.trim();
+      if (!message && !uploadedFileContent) return;
+
+      renderUserMessage(message);
+      inputEl.value = "";
+
+      const lowerMessage = message.toLowerCase();
+      const detectedAbuse = abuseKeywords.some(keyword => lowerMessage.includes(keyword));
+      const detectedDevQuery = developerKeywords.some(keyword => lowerMessage.includes(keyword));
+
+      document.getElementById('thinking-indicator').classList.remove('hidden');
+
+      if (detectedDevQuery) {
+        setTimeout(() => {
+          document.getElementById('thinking-indicator').classList.add('hidden');
+          const devReply = currentLang === 'MR'
+            ? "मी Kumbh Connect प्लॅटफॉर्मचा AI असिस्टंट आहे. याबद्दल अधिक माहिती Kumbh Connect अ‍ॅपमधील 'आमच्याबद्दल' पानावर मिळेल."
+            : "I'm the AI assistant built into the Kumbh Connect platform. You can find more details on the 'About' page inside the Kumbh Connect app.";
+          renderBotMessage(devReply);
+          speakText(devReply);
+          saveSession(message, devReply);
+          clearFile();
+        }, 500);
+        return;
+      }
+
+      if (detectedAbuse) {
+        if (!isAngry) { isAngry = true; }
+        setTimeout(() => {
+          document.getElementById('thinking-indicator').classList.add('hidden');
+          const angryRepliesEN = [
+            `Please keep it respectful, ${userName} — I'm here to help with your Kumbh journey.`,
+            `Let's keep the conversation civil so I can actually help you.`,
+          ];
+          const angryRepliesMR = [
+            `${userName}, कृपया शांतपणे बोला — मी तुम्हाला मदत करण्यासाठीच आहे.`,
+            `थोडं संयमाने बोलूया, म्हणजे मी तुम्हाला व्यवस्थित मदत करू शकेन.`,
+          ];
+          const list = currentLang === 'MR' ? angryRepliesMR : angryRepliesEN;
+          const chosenReply = list[Math.floor(Math.random() * list.length)];
+          renderBotMessage(chosenReply);
+          speakText(chosenReply);
+          clearFile();
+        }, 700);
+        return;
+      }
+
+      if (isAngry && (lowerMessage.includes('sorry') || lowerMessage.includes('apologize') || lowerMessage.includes('माफ करा') || lowerMessage.includes('माफी'))) {
+        isAngry = false;
+      }
+
+      if (currentMode === 'image' || message.toLowerCase().startsWith('image:') || message.toLowerCase().startsWith('generate image')) {
+        const cleanPrompt = message.replace(/^image:/i, '').replace(/^generate image/i, '').trim();
+        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(cleanPrompt)}?width=800&height=800&nologo=true`;
+        setTimeout(() => {
+          document.getElementById('thinking-indicator').classList.add('hidden');
+          const replyText = currentLang === 'MR' ? `तुमची प्रतिमा तयार आहे:` : `Here is your generated image:`;
+          renderBotMessage(replyText, imageUrl);
+          speakText(replyText);
+          saveSession(message, replyText);
+          clearFile();
+        }, 1000);
+        return;
+      }
+
+      let systemReasoningPrompt = `System Persona: You are PrathAI, the AI Assistant built into the Kumbh Connect platform for the Nashik-Trimbakeshwar Kumbh Mela.
+      Instructions: Think step-by-step. Prioritise practical, safety-relevant, pilgrimage-specific answers (crowd status, ghats, routes, medical camps, lost & found, timings) when relevant. User name: ${userName}.`;
+
+      let chatHistoryContext = currentSession.slice(-6).map(m => `User: ${m.user}\nAssistant: ${m.bot}`).join('\n');
+
+      let searchQuery = `${systemReasoningPrompt}\n`;
+      if (chatHistoryContext) searchQuery += `Conversation Memory Context:\n${chatHistoryContext}\n`;
+      searchQuery += `User Query: ${message}`;
+
+      if (currentLang === 'MR') searchQuery += " (Respond comprehensively in Marathi)";
+      if (uploadedFileContent) searchQuery += ` Document Context: ${uploadedFileContent.substring(0, 500)}`;
+
+      try {
+        const response = await fetch('https://api.tavily.com/search', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            api_key: TAVILY_API_KEY,
+            query: searchQuery,
+            search_depth: "advanced",
+            include_answer: true
+          })
+        });
+
+        const data = await response.json();
+        let reply = data.answer || (data.results && data.results[0] ? data.results[0].content : null);
+
+        if (!reply) {
+          reply = currentLang === 'MR'
+            ? `मी "${message}" या प्रश्नाचे विश्लेषण केले आहे. अधिक स्पष्टतेसाठी प्रश्नात थोडे अधिक तपशील जोडा.`
+            : `I've looked into your query about "${message}". Please share a bit more detail so I can give you a precise answer.`;
+        }
+
+        document.getElementById('thinking-indicator').classList.add('hidden');
+        renderBotMessage(reply);
+        speakText(reply);
+        saveSession(message, reply);
+        clearFile();
+
+      } catch (err) {
+        document.getElementById('thinking-indicator').classList.add('hidden');
+        const errFallback = currentLang === 'MR'
+          ? "सध्या कनेक्शन मध्ये अडचण आहे. कृपया इंटरनेट तपासा आणि पुन्हा प्रयत्न करा."
+          : "There's a connection issue right now. Please check your internet and try again.";
+        renderBotMessage(errFallback);
+      }
+    }
+
+    function saveSession(userMsg, botReply) {
+      currentSession.push({ user: userMsg, bot: botReply });
+      const existingIdx = savedSessions.findIndex(s => s.id === currentSessionId);
+      const sessionData = { id: currentSessionId, title: currentSession[0].user.substring(0, 24) + "...", messages: currentSession };
+      if (existingIdx >= 0) savedSessions[existingIdx] = sessionData;
+      else savedSessions.unshift(sessionData);
+      setStoredData('prathai_sessions', savedSessions);
+      renderHistoryUI();
+    }
+
+    function renderHistoryUI() {
+      const container = document.getElementById('chat-history-list');
+      if (!savedSessions || savedSessions.length === 0) {
+        container.innerHTML = `<p class="text-[11px] p-2" style="color: var(--ink-soft);">अजून काही चॅट नाही.</p>`;
+        return;
+      }
+      container.innerHTML = savedSessions.map(s => `
+        <div onclick="loadSession(${s.id})" class="p-2.5 rounded-xl truncate cursor-pointer flex items-center justify-between group transition hover:opacity-80">
+          <span class="truncate">💬 ${escapeHtml(s.title)}</span>
+          <button onclick="deleteSession(event, ${s.id})" class="opacity-0 group-hover:opacity-100 transition px-1" style="color: var(--saffron);">✕</button>
+        </div>`).join('');
+    }
+
+    function loadSession(id) {
+      const session = savedSessions.find(s => s.id === id);
+      if (session) {
+        currentSessionId = session.id;
+        currentSession = session.messages;
+        document.getElementById('chat-box').innerHTML = "";
+        document.getElementById('hero-title').classList.add('hidden');
+        document.getElementById('chat-box').classList.remove('hidden');
+        session.messages.forEach(m => { renderUserMessage(m.user); renderBotMessage(m.bot); });
+        toggleSidebar();
+      }
+    }
+
+    function deleteSession(e, id) {
+      e.stopPropagation();
+      savedSessions = savedSessions.filter(s => s.id !== id);
+      setStoredData('prathai_sessions', savedSessions);
+      renderHistoryUI();
+    }
+
+    function clearHistory() {
+      savedSessions = [];
+      try { localStorage.removeItem('prathai_sessions'); } catch (e) {}
+      renderHistoryUI();
+    }
+
+    function filterChats() {
+      const q = document.getElementById('search-chat-input').value.toLowerCase();
+      document.querySelectorAll('#chat-history-list div').forEach(item => {
+        item.style.display = item.innerText.toLowerCase().includes(q) ? 'flex' : 'none';
+      });
+    }
+
+    function startNewChat() {
+      currentSessionId = Date.now();
+      currentSession = [];
+      document.getElementById('chat-box').innerHTML = "";
+      document.getElementById('chat-box').classList.add('hidden');
+      document.getElementById('hero-title').classList.remove('hidden');
+      toggleMode('chat');
+      toggleSidebar();
+    }
+
+    let recognition;
+    let wakeWordActive = false;
+
+    function toggleWakeWord() {
+      const statusSpan = document.getElementById('wake-status');
+      if (!wakeWordActive) {
+        startListening();
+        wakeWordActive = true;
+        statusSpan.innerText = "ON";
+        statusSpan.style.color = "var(--saffron)";
+      } else {
+        if (recognition) recognition.stop();
+        wakeWordActive = false;
+        statusSpan.innerText = "OFF";
+        statusSpan.style.color = "var(--ink-soft)";
+      }
+    }
+
+    function startListening() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return;
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = currentLang === 'MR' ? 'mr-IN' : 'en-US';
+
+      recognition.onresult = (event) => {
+        const last = event.results.length - 1;
+        const transcript = event.results[last][0].transcript.trim().toLowerCase();
+        if (transcript.includes("hey prathai") || transcript.includes("prathai")) {
+          const resp = currentLang === 'MR' ? `बोल ${userName}, मी तुझी काय मदत करू?` : `Hey ${userName}, how can I help you?`;
+          speakText(resp);
+        }
+      };
+      recognition.onend = () => { if (wakeWordActive) recognition.start(); };
+      recognition.start();
+    }
+  </script>
+</body>
+</html>
